@@ -21,7 +21,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::767397768705:role/New-Role-GITHUB-AWS
-          aws-region: us-east-1
+          aws-region: ap-south-1
 
       - name: Deploy with Terraform
         run: |
