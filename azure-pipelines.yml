@@ -1,19 +1,38 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- main
+  - dev-omnagare
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
+
+variables:
+  TEST_FILE_NAME: 'testfile.txt'  # File name for the test file
+  STORAGE_ACCOUNT_NAME: 'mobileappupload'  # Your Azure Storage Account name
+  CONTAINER_NAME: 'application'  # Your Azure Blob Storage container name
+  BLOB_NAME: '$(TEST_FILE_NAME)'  # Blob name to upload
+  STORAGE_ACCOUNT_KEY: 'rO/lQnT1bnXp+Ug65dHM2tFca7rbUP3/6c/gAsXsXRALGNKMcq9WGuaadLus9C7KdGPPSt6bhPf3+AStQhPNtQ=='  # Your Storage Account Key
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+  # Step 1: Create a test file to upload
+  - script: |
+      echo "This is a test file for Azure Blob Storage upload." > $(TEST_FILE_NAME)
+    displayName: 'Create Test File'
+
+  # Step 2: Install AzCopy (in case it is not installed)
+  - script: |
+      curl -sL https://aka.ms/downloadazcopy-v10-linux | tar -xz -C /usr/local/bin
+      azcopy --version
+    displayName: 'Install AzCopy'
+
+  # Step 3: AzCopy login using hardcoded Service Principal credentials
+  - script: |
+      azcopy login --service-principal \
+        --application-id '9a8f7a16-8a03-4c97-b298-01b66d65ca1b' \
+        --tenant-id '23f49155-feba-4020-a0b6-75ae4ea76acd' \
+        --client-secret 'FgO8Q~Ax3ivwKalDiKg9mSl~MYH7HyktBW6CucN0'
+    displayName: 'Login to AzCopy'
+
+  # Step 4: Upload test file to Azure Blob Storage using AzCopy
+  - script: |
+      azcopy copy "$(TEST_FILE_NAME)" "https://$(STORAGE_ACCOUNT_NAME).blob.core.windows.net/$(CONTAINER_NAME)/$(BLOB_NAME)?$(STORAGE_ACCOUNT_KEY)" --recursive=true
+    displayName: 'Upload Test File to Azure Blob Storage'
